@@ -1,5 +1,5 @@
 # Introdução
-O MQTT (euing Telemetry Transport) é um protocolo para comunicação de mensagens entre dispositivos como sensores e computadores móveis. Neste projeto, integraremos o modelo anterior, que se baseava na comunicação UART entre a placa raspberry e o node MCU, com a comunicação MQTT para uma interface de usuário remota.
+O MQTT (Message Queuing Telemetry Transport) é um protocolo para comunicação de mensagens entre dispositivos como sensores e computadores móveis. Neste projeto, integraremos o modelo anterior, que se baseava na comunicação UART entre a placa raspberry e o node MCU, com a comunicação MQTT para uma interface de usuário remota.
 
 # Estrutura do projeto
 Segue abaixo a estrutura de diretórios do projeto
@@ -51,9 +51,9 @@ Programa principal para execução do contador. O valor do contador fica registr
 # Makefile
 
 Para facilitar a construção do programa, existe um makefile dentro da pasta rpi, onde é possível executar:
-`$ make uart`
+`$ make csystem`
 Para construção do executável. Logo em seguida basta utilizar:
-`$ sudo ./uartx`
+`$ sudo ./system`
 para executar o programa
 ```
 countdown: counter
@@ -259,27 +259,57 @@ Por fim, têm-se as duas funções citadas anteriormente. A função **_addData_
 ### UART - Raspberry Pi
 1. Na pasta rpi/ execute:
 
-`$ make uart`
+`$ make csystem`
 
 2. Em seguida execute o programa
 
-`$ sudo ./uartx`
+`$ sudo ./system`
 
-### UART - NodeMCU
+### MQTT - NodeMCU
 1. Na pasta nodemcu/ abra o arquivo uart.ino na Arduino IDE:
 2. Configure as bibliotecas do NodeMCU
 3. Descarregue o código na pltaforma
 
+# Testes
 
-# Resultados
-![ezgif com-gif-maker](https://user-images.githubusercontent.com/26310730/200437854-fd1294f9-dee1-4beb-9a84-4857ef3f05ec.gif)
+#### Teste 1 - Código Secreto
+
+Para a Raspberry Pi se comunicar com a NodeMCU é preciso receber uma palavra chave da NodeMCU indicando uma inicialização. Devido ao fato que ao reiniciar a NodeMCU a mesma emite vários dados aleatórios nas saídas da UART.
+
+1. Inicializar o programa na Raspberry Pi
+2. Descarregar programa na NodeMCU
+3. No terminal, deve ser imprimido a mensagem: "Secret code found", indicando que a comunicação foi estabelecida
+
+
+#### Teste 2 - Transferência de Informação
+
+1. Após o Teste 1 executado, o sistema está pronto pra execução.
+2. Inserir comando: 11, para transferir a informação presente no sensor de índice 0.
+3. Caso queira inserir o valor presente na entrada D0 da NodeMCU, basta realizar: `SENSOR_VALUE[0] = digitalRead(D0)` na função de loop da NodeMCU
+4. Caso haja um nível lógico ativo, a resposta deve ser 1. Caso contrário, a resposta deve ser 0.
+
+#### Teste 3 - Frequência
+1. Com a interface local, fora da tela de frequência, acessar a interface remota e configurar a frequência para 5.
+2. As atualizações, em ambas interfaces devem ocorrer a cada 5 segundos.
+3. Mudar o valor de um sensor, esperar a mudança.
+4. Mudar novamente o valor e contar quanto tempo passará até a atualização.
+5. O novo valor deve ser atualizado após 5 segundos.
+
+#### Teste 4 - Interface Remota
+
+1. Acessar interface remota.
+2. Alterar valor de algum sensor.
+3. Observar o valor alterado na interface remota.
 
 O protótipo construído é um sistema digital utilizando plataformas de desenvolvimento IoT, em que se pode adicionar até 32 sensores analógicos e/ou digitais e exibir as respectivas informações em um display de LCD.
 
-## Limitações da UART
+## Limitações
 
-### Quantidade de dispositivos
-A comunicação serial, apesar de simples, mas só permite a comunicação entre dois dispositivos. Caso seja necessário enviar ou receber informações de mais dispositivo se torna inviável, necessitando do uso de outros protocolos, como o caso do i2c;
+### Quantidade de Informação
+Devido a limitações da biblioteca, a quantidade de informações transferidas é limitada, pois a mesma está sendo quebrada em diversos pacotes. Isso gera um atraso na transferência, devido ao tempo de publicação das mensagens. como o caso do i2c;
 
-### Velocidade
-Comparado a protocolos como i2c e SPI, pode haver uma diferença de velocidade de até 10 vezes, fazendo o protocolo UART ser mais lento e algumas vezes inviável dependendo da aplicação.
+### Relógio
+A NodeMCU não possui relógio. Então, as informações não são enviadas com a hora em que elas foram coletadas. Diferentemente da Raspberry Pi que conta com este recurso, facilitando assim a organização temporal dos dados.
+
+### Memória
+A NodeMCU não é capaz de reter grandes quantidades de informação em memória, logo, se houvesse a necessidade de guardar um histórico mais longo dos sensores, poderia se tornar inviável
